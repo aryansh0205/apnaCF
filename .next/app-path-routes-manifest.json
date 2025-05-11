@@ -1,12 +1,12 @@
 {
   "/_not-found/page": "/_not-found",
   "/favicon.ico/route": "/favicon.ico",
-  "/ContactUs/page": "/ContactUs",
-  "/creators/page": "/creators",
   "/AboutUs/page": "/AboutUs",
-  "/page": "/",
+  "/ContactUs/page": "/ContactUs",
   "/membership/page": "/membership",
+  "/creators/page": "/creators",
+  "/offers/page": "/offers",
+  "/page": "/",
   "/spin-wheel/page": "/spin-wheel",
-  "/under-construction/page": "/under-construction",
-  "/offers/page": "/offers"
+  "/under-construction/page": "/under-construction"
 }

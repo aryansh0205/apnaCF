@@ -7,7 +7,6 @@ import PlacesSection from "./components/PlacesSection";
 import EventGrid from "./components/EventGrid";
 import Footer from "./components/Footer";
 
-
 export default function Home() {
   return (
     <div>
@@ -18,7 +17,6 @@ export default function Home() {
       <PlacesSection />
       <EventGrid />
       <Footer />
-
     </div>
   );
 }

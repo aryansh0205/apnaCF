@@ -9,28 +9,32 @@ type Offer = {
   offerImage: string;
   offerName: string;
   offerDescription: string;
+  url: string;
 };
 
 export default function DataGrid() {
-  const [data, setData] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const getCreators = async () => {
-    try {
-      const res = await axios.get(`${API}/getOffer`);
-      setData(res.data);
-    } catch (e) {
-      console.error("Error fetching offers:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  const [offers, setOffers] = useState<Offer[]>([]);
   useEffect(() => {
-    getCreators();
+    const fetchOffers = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`${API}/getAllOffers`);
+        setOffers(response.data.offers || []);
+      } catch (err) {
+        console.error("Error fetching offers:", err);
+        // setError("Failed to load offers. Please try again later.");
+        setOffers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOffers();
   }, []);
 
-  const filteredEvents = data.filter((d) => d.offerType === "event");
+  const filteredEvents = offers.filter((d) => d.offerType === "event");
 
   return (
     <>
@@ -48,7 +52,7 @@ export default function DataGrid() {
                 >
                   <div className="relative w-full h-[250px]">
                     <Image
-                      src={item.offerImage}
+                      src={item.url}
                       alt={item.offerName}
                       fill
                       className="object-cover"

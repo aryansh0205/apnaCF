@@ -1,4 +1,4 @@
-// File: C:\Users\victus\Desktop\apna city\ApnaCity copy\app\spin-wheel\page.tsx
+// File: C:\Users\victus\Desktop\ApnaCity copy\app\spin-wheel\page.tsx
 import * as entry from '../../../../app/spin-wheel/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

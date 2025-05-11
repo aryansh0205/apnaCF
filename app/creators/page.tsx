@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
@@ -13,17 +12,8 @@ import {
 import { FaLinkedinIn, FaSearch } from "react-icons/fa";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import Image from "next/image";
 import { API } from "../utils/helpers";
-
-const filterTabs = [
-  { label: "This Week", value: "this_week" },
-  { label: "Top Trending", value: "trending" },
-  { label: "All Time", value: "all_time" },
-  { label: "Top Rated", value: "top_rated" },
-] as const;
-
-type FilterTabValue = (typeof filterTabs)[number]["value"];
+import { RiFacebookCircleLine } from "react-icons/ri";
 
 interface Creator {
   id: string;
@@ -33,96 +23,96 @@ interface Creator {
   rating: number;
   collaborations: number;
   phone: string;
+  creatorPhone: string;
   email: string;
-  social: {
-    instagram: string | null;
-    youtube: string | null;
-    tiktok: string | null;
-    twitter: string | null;
-    linkedin: string | null;
-  };
+  creatorCategory: string;
+  creatorEmail: string;
+  yt: string | null;
+  fb: string | null;
+  insta: string | null;
+  tiktok: string | null;
+  twitter: string | null;
+  linkedin: string | null;
 }
 
 export default function CreatorsListPage() {
   const [creators, setCreators] = useState<Creator[]>([]);
   const [filtered, setFiltered] = useState<Creator[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<FilterTabValue>("all_time");
+  // const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [city, setCity] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const res = await axios.get(`${API}/getCreators`);
-
-        const processed: Creator[] =
-          res.data?.processedCreators?.map((c: unknown) => {
-            const creator = c as Record<string, unknown>;
-            return {
-              id: String(creator._id),
-              creatorName: String(creator.creatorName),
-              creatorImage: String(creator.creatorImage),
-              category: String(creator.category || "Content Creator"),
-              rating: Number(creator.rating ?? 4.0),
-              collaborations: Number(creator.collaborations ?? 0),
-              phone: String(creator.phone || "+91 XXXXX XXXXX"),
-              email: String(creator.email || "contact@creator.com"),
-              social: {
-                instagram: creator.instagram ? String(creator.instagram) : null,
-                youtube: creator.youtube ? String(creator.youtube) : null,
-                tiktok: creator.tiktok ? String(creator.tiktok) : null,
-                twitter: creator.twitter ? String(creator.twitter) : null,
-                linkedin: creator.linkedin ? String(creator.linkedin) : null,
-              },
-            };
-          }) || [];
-
-        setCreators(processed);
-        setFiltered(processed);
-      } catch (err) {
-        console.error("API failed, using fallback data.", err);
-        setCreators([]);
-        setFiltered([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    const storedCity = localStorage.getItem("selectedCity");
+    setCity(storedCity);
   }, []);
+  const fetchCeartors = async () => {
+    // setLoading(true);
+    try {
+      // const city = localStorage.getItem("selectedCity");
+      // console.log(city, "city");
+      const res = await axios.get(`${API}/getCreators?city=${city}`);
+      console.log(res.data, "creators");
+      setCreators(res.data?.creators || []);
+
+      setFiltered(res.data?.creators || []);
+    } catch (error) {
+      console.error("Error fetching creators:", error);
+    }
+    // setLoading(false);
+  };
 
   useEffect(() => {
-    let updated = [...creators];
-
-    if (activeTab === "this_week") {
-      updated = updated.slice(0, 4);
-    } else if (activeTab === "trending") {
-      updated.sort((a, b) => b.collaborations - a.collaborations);
-    } else if (activeTab === "top_rated") {
-      updated.sort((a, b) => b.rating - a.rating);
+    fetchCeartors();
+  }, []);
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFiltered(creators);
+      return;
     }
 
-    if (searchTerm) {
-      const lowerSearch = searchTerm.toLowerCase();
-      updated = updated.filter(
-        (c) =>
-          c.creatorName.toLowerCase().includes(lowerSearch) ||
-          c.category.toLowerCase().includes(lowerSearch)
-      );
-    }
+    const lowerSearch = searchTerm.toLowerCase();
 
-    setFiltered(updated);
-  }, [activeTab, searchTerm, creators]);
+    const filteredList = creators.filter((c) => {
+      const name = c.creatorName?.toLowerCase() || "";
+      const email = c.creatorEmail?.toLowerCase() || "";
+
+      return name.startsWith(lowerSearch) || email.startsWith(lowerSearch);
+    });
+
+    setFiltered(filteredList);
+  }, [searchTerm, creators]);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      <div className="max-w-7xl mx-auto px-4 py-10 sm:px-6 lg:px-8 md:pt-36 pt-25">
-        <h1 className="text-2xl font-bold mb-6 text-center">
-          Top Creators in Kanpur
-        </h1>
+      <div className="max-w-7xl mx-auto px-4 py-10 sm:px-6 lg:px-8 md:pt-25 pt-10 bg-">
+        <div className="relative max-w-7xl mx-auto px-4 text-center ">
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-3xl sm:text-5xl lg:text-6xl font-extrabold leading-tight text-gray-900 "
+          >
+            Meet the <span className="text-red-600">Creators</span> Shaping Your
+            City
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="mt-6 text-[18px] sm:text-xl max-w-2xl mx-auto text-gray-600 "
+          >
+            Discover local creators shaping your city&apos;s vibe.
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mt-10"
+          ></motion.div>
+        </div>
 
         {/* Search and Filter Tabs */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
@@ -137,7 +127,7 @@ export default function CreatorsListPage() {
             <FaSearch className="absolute left-3 top-3 text-gray-400" />
           </div>
 
-          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+          {/* <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
             {filterTabs.map((tab) => (
               <button
                 key={tab.value}
@@ -151,95 +141,83 @@ export default function CreatorsListPage() {
                 {tab.label}
               </button>
             ))}
-          </div>
+          </div> */}
         </div>
-
-        {/* Creator Grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div
-                key={i}
-                className="h-60 bg-gray-200 animate-pulse rounded-lg"
-              />
-            ))}
-          </div>
-        ) : filtered.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filtered.map((creator) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {filtered.map((item, index) => {
+            return (
               <motion.div
-                key={creator.id}
+                key={item?.id || index}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
                 whileHover={{ y: -5 }}
                 className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-all duration-200"
               >
-                <Image
+                <img
                   width={500}
                   height={600}
-                  src={creator.creatorImage || "/default-creator.jpg"}
-                  alt={creator.creatorName}
+                  src={item?.creatorImage}
+                  alt="dp"
                   className="w-full h-40 object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = "/default-creator.jpg";
-                  }}
                 />
                 <div className="p-4">
                   <h3 className="font-semibold text-gray-900 truncate">
-                    {creator.creatorName}
+                    {item?.creatorName}
                   </h3>
                   <p className="text-sm text-gray-500 mb-1">
-                    {creator.category}
+                    {item?.creatorCategory}
                   </p>
 
                   <div className="text-sm text-gray-700 mb-2 truncate">
                     <FiMail className="inline mr-2 text-gray-500" />
-                    {creator.email}
+                    {item?.creatorEmail}
                   </div>
                   <div className="text-sm text-gray-700 truncate">
                     <FiPhone className="inline mr-2 text-gray-500" />
-                    {creator.phone}
+                    {item?.creatorPhone}
                   </div>
 
                   <div className="flex space-x-2 mt-3 text-gray-600">
-                    {creator.social?.instagram && (
+                    {item?.insta && (
                       <a
-                        href={`https://instagram.com/${creator.social.instagram.replace(
-                          "@",
-                          ""
-                        )}`}
+                        href={`${item?.insta}`}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
                         <FiInstagram />
                       </a>
                     )}
-                    {creator.social?.youtube && (
+                    {`${item?.yt}` && (
                       <a
-                        href={`https://youtube.com/${creator.social.youtube}`}
+                        href={`${item?.tiktok}`}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
                         <FiYoutube />
                       </a>
                     )}
-                    {creator.social?.twitter && (
+                    {`${item?.yt}` && (
                       <a
-                        href={`https://twitter.com/${creator.social.twitter.replace(
-                          "@",
-                          ""
-                        )}`}
+                        href={`${item?.yt}`}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
                         <FiTwitter />
                       </a>
                     )}
-                    {creator.social?.linkedin && (
+                    {`${item?.fb}` && (
                       <a
-                        href={`https://linkedin.com/in/${creator.social.linkedin}`}
+                        href={`${item?.fb}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <RiFacebookCircleLine />
+                      </a>
+                    )}
+                    {`${item?.linkedin}` && (
+                      <a
+                        href={`${item?.linkedin}`}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
@@ -249,13 +227,11 @@ export default function CreatorsListPage() {
                   </div>
                 </div>
               </motion.div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center text-gray-600 mt-12">
-            No creators found for your search.
-          </div>
-        )}
+            );
+          })}
+        </div>
+
+        {/* Creator Grid */}
       </div>
 
       <Footer />

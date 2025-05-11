@@ -23,6 +23,7 @@ type Offer = {
   isOnline: boolean;
   website?: string;
   address?: string;
+  url: string;
 };
 
 const RatingStars = ({ rating }: { rating: number }) => {
@@ -70,42 +71,12 @@ export default function OffersPage() {
     const fetchOffers = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`${API}/offers`);
+        const response = await axios.get(`${API}/getAllOffers`);
         setOffers(response.data.offers || []);
       } catch (err) {
         console.error("Error fetching offers:", err);
         // setError("Failed to load offers. Please try again later.");
-        setOffers([
-          {
-            _id: "1",
-            offerName: "Weekend Brunch Special",
-            businessName: "Cafe Mocha",
-            category: "Food & Dining",
-            discount: "20% OFF",
-            offerDescription:
-              "Enjoy our signature pancakes with maple syrup and fresh fruits",
-            validity: "Valid until 30 June 2023",
-            rating: 4.5,
-            distance: "0.5 km",
-            offerImage: "/offer1.png",
-            isOnline: false,
-            address: "123 Main Street, Kanpur",
-          },
-          {
-            _id: "2",
-            offerName: "Online Shopping Discount",
-            businessName: "Urban Styles",
-            category: "Retail",
-            discount: "15% OFF",
-            offerDescription: "Use code LOCAL15 for online purchases",
-            validity: "Valid until 31 July 2023",
-            rating: 4.2,
-            distance: "2.1 km",
-            offerImage: "/offer2.png",
-            isOnline: true,
-            website: "https://urbanstyles.example.com",
-          },
-        ]);
+        setOffers([]);
       } finally {
         setLoading(false);
       }
@@ -113,20 +84,6 @@ export default function OffersPage() {
 
     fetchOffers();
   }, []);
-
-  const filteredOffers = offers.filter((offer) => {
-    const matchesSearch =
-      offer.offerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      offer.businessName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory =
-      selectedCategory === "All" || offer.category === selectedCategory;
-    const matchesType =
-      offerType === "all" ||
-      (offerType === "online" && offer.isOnline) ||
-      (offerType === "offline" && !offer.isOnline);
-    const matchesPincode = !pincode || offer.distance.includes(pincode);
-    return matchesSearch && matchesCategory && matchesType && matchesPincode;
-  });
 
   const resetFilters = () => {
     setSearchTerm("");
@@ -147,26 +104,35 @@ export default function OffersPage() {
       <Header />
 
       {/* Header Section */}
-      <div className="relative pt-28 md:pt-36 pb-16 overflow-hidden bg-gradient-to-r from-red-50 to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-4xl font-bold text-gray-900 sm:text-5xl"
-            >
-              Local Deals & Offers
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="mt-4 text-xl text-gray-600 max-w-2xl mx-auto"
-            >
-              Discover exclusive discounts from businesses near you
-            </motion.p>
-          </div>
+      <div className="relative md:py-20 py-10 overflow-hidden">
+        <div className="relative max-w-7xl mx-auto px-4 text-center">
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-3xl sm:text-5xl lg:text-6xl font-extrabold leading-tight text-gray-900"
+          >
+            Local <span className="text-red-600">Deals & Offers</span>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="mt-6 text-[18px] sm:text-xl max-w-2xl mx-auto text-gray-600"
+          >
+            Discover exclusive discounts from businesses near you
+          </motion.p>
+          {/* Optional CTA Button (commented out) */}
+          {/* <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay: 0.2 }}
+      className="mt-6"
+    >
+      <button className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg font-medium text-lg transition transform hover:scale-105 shadow-lg focus:outline-none focus:ring-4 focus:ring-red-200">
+        See All Offers
+      </button>
+    </motion.div> */}
         </div>
       </div>
 
@@ -275,8 +241,8 @@ export default function OffersPage() {
 
         {/* Results Count */}
         <div className="mb-4 text-sm text-gray-600">
-          {filteredOffers.length > 0
-            ? `Showing ${filteredOffers.length} ${
+          {offers.length > 0
+            ? `Showing ${offers.length} ${
                 offerType !== "all" ? offerType : ""
               } offers`
             : "No offers match your criteria"}
@@ -304,7 +270,7 @@ export default function OffersPage() {
               </div>
             ))}
           </div>
-        ) : filteredOffers.length === 0 ? (
+        ) : offers.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm p-8 text-center">
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               {offers.length === 0
@@ -327,7 +293,7 @@ export default function OffersPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredOffers.map((offer) => (
+            {offers.map((offer) => (
               <motion.div
                 key={offer._id}
                 initial={{ opacity: 0, y: 20 }}
@@ -338,7 +304,7 @@ export default function OffersPage() {
               >
                 <div className="relative h-48 w-full">
                   <Image
-                    src={offer.offerImage || "/placeholder.jpg"}
+                    src={offer.url || "/placeholder.jpg"}
                     alt={offer.offerName}
                     fill
                     className="object-cover"
@@ -366,7 +332,7 @@ export default function OffersPage() {
                   </p>
 
                   <div className="flex items-center justify-between mb-4">
-                    <RatingStars rating={offer.rating} />
+                    {/* <RatingStars rating={offer.rating} /> */}
                     <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">
                       {offer.category}
                     </span>
@@ -427,7 +393,7 @@ export default function OffersPage() {
             >
               <div className="relative h-56 w-full">
                 <Image
-                  src={selectedOffer.offerImage || "/placeholder.jpg"}
+                  src={selectedOffer.url || "/placeholder.jpg"}
                   alt={selectedOffer.offerName}
                   fill
                   className="object-cover"

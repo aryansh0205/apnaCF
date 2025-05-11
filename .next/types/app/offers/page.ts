@@ -1,4 +1,4 @@
-// File: C:\Users\victus\Desktop\apna city\ApnaCity copy\app\offers\page.tsx
+// File: C:\Users\victus\Desktop\ApnaCity copy\app\offers\page.tsx
 import * as entry from '../../../../app/offers/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

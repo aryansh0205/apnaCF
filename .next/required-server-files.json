@@ -101,7 +101,7 @@
         "transform": "lodash/{{member}}"
       }
     },
-    "outputFileTracingRoot": "C:\\Users\\victus\\Desktop\\apna city\\ApnaCity copy",
+    "outputFileTracingRoot": "C:\\Users\\victus\\Desktop\\ApnaCity copy",
     "allowedDevOrigins": [],
     "experimental": {
       "allowedDevOrigins": [],
@@ -181,7 +181,7 @@
       "forceSwcTransforms": false,
       "largePageDataBytes": 128000,
       "turbo": {
-        "root": "C:\\Users\\victus\\Desktop\\apna city\\ApnaCity copy"
+        "root": "C:\\Users\\victus\\Desktop\\ApnaCity copy"
       },
       "typedRoutes": false,
       "typedEnv": false,
@@ -287,7 +287,7 @@
     "bundlePagesRouterDependencies": false,
     "configFileName": "next.config.ts"
   },
-  "appDir": "C:\\Users\\victus\\Desktop\\apna city\\ApnaCity copy",
+  "appDir": "C:\\Users\\victus\\Desktop\\ApnaCity copy",
   "relativeAppDir": "",
   "files": [
     ".next\\routes-manifest.json",

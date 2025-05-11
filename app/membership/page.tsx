@@ -1,413 +1,469 @@
 "use client";
-import { useState, useEffect } from "react";
-import { FiCheck, FiArrowRight, FiPlus, FiMinus } from "react-icons/fi";
+import { useState, useEffect, useRef } from "react";
+import { FiCheck, FiClock, FiAward, FiTrendingUp } from "react-icons/fi";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
-export default function MembershipPage() {
-  const [selectedTier, setSelectedTier] = useState<"hero" | "champion" | null>(
-    null
-  );
-  const [showAddons, setShowAddons] = useState(false);
-  const [timeLeft, setTimeLeft] = useState({
-    hours: 19,
-    minutes: 45,
-    seconds: 30,
-  });
+export default function PromotionPage() {
+  const [selectedPromotion, setSelectedPromotion] = useState<
+    "trending" | "featured" | null
+  >(null);
+  const [duration, setDuration] = useState<number>(1);
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const contactFormRef = useRef<HTMLDivElement>(null);
 
-  // Additional services
-  const [selectedServices, setSelectedServices] = useState<
-    Record<string, boolean>
-  >({
-    "Professional Banner Design": false,
-    "Additional Image Slots": false,
-    "Review Management": false,
-    "Featured Listing Boost": false,
-  });
-
-  // Pricing data
-  const pricing = {
-    original: {
-      hero: 999,
-      champion: 2499,
+  // Promotion options
+  const promotions = {
+    trending: {
+      title: "Trending Spotlight",
+      description: "Get your offer featured in our trending section",
+      basePrice: 99,
+      durationOptions: [
+        { days: 1, price: 99 },
+        { days: 3, price: 249 },
+        { days: 7, price: 499 },
+      ],
+      auctionNote: "Top positions go to highest bidders",
     },
-    discounted: {
-      hero: 399,
-      champion: 999,
-    },
-    services: {
-      "Professional Banner Design": 499,
-      "Additional Image Slots": 199,
-      "Review Management": 799,
-      "Featured Listing Boost": 299,
-    },
-    discounts: {
-      hero: Math.round(((999 - 399) / 999) * 100),
-      champion: Math.round(((2499 - 999) / 2499) * 100),
+    featured: {
+      title: "Featured Placement",
+      description: "Premium visibility at the top of relevant categories",
+      basePrice: 199,
+      durationOptions: [
+        { days: 1, price: 199 },
+        { days: 3, price: 499 },
+        { days: 7, price: 999 },
+      ],
+      auctionNote: "Bid competitively for prime spots",
     },
   };
 
-  // Calculate total
-  const calculateTotal = () => {
-    let total = 0;
-    if (selectedTier) {
-      total += pricing.discounted[selectedTier];
-    }
-
-    Object.entries(selectedServices).forEach(([service, isSelected]) => {
-      if (isSelected) {
-        total += pricing.services[service as keyof typeof pricing.services];
-      }
-    });
-
-    return total;
-  };
-
-  // Toggle service selection
-  const toggleService = (service: string) => {
-    setSelectedServices((prev) => ({
-      ...prev,
-      [service]: !prev[service],
-    }));
-  };
-
-  // Countdown timer
+  // Check if mobile on mount and resize
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        const newSeconds = prev.seconds - 1;
-        const newMinutes = newSeconds < 0 ? prev.minutes - 1 : prev.minutes;
-        const newHours = newMinutes < 0 ? prev.hours - 1 : prev.hours;
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
 
-        return {
-          hours: newHours < 0 ? 0 : newHours,
-          minutes: newMinutes < 0 ? 59 : newMinutes,
-          seconds: newSeconds < 0 ? 59 : newSeconds,
-        };
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
+    checkIfMobile();
+    window.addEventListener("resize", checkIfMobile);
+    return () => window.removeEventListener("resize", checkIfMobile);
   }, []);
 
-  const handlePurchase = () => {
-    // Handle purchase logic here
-    const purchaseData = {
-      tier: selectedTier,
-      services: Object.entries(selectedServices)
-        .filter(([, isSelected]) => isSelected)
-        .map(([service]) => service),
-      total: calculateTotal(),
-    };
-    console.log("Purchase data:", purchaseData);
-    // Redirect to payment page or show payment modal
+  // Calculate total price
+  const calculateTotal = () => {
+    if (!selectedPromotion) return 0;
+    const selectedOption = promotions[selectedPromotion].durationOptions.find(
+      (opt) => opt.days === duration
+    );
+    return selectedOption ? selectedOption.price : 0;
+  };
+
+  // Handle promotion selection
+  const handlePromotionSelect = (type: "trending" | "featured") => {
+    setSelectedPromotion(type);
+    setDuration(1); // Reset to default duration
+    setShowContactForm(false);
+    setIsSubmitted(false);
+
+    // Scroll to contact form on desktop
+    if (!isMobile && contactFormRef.current) {
+      setTimeout(() => {
+        contactFormRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+  };
+
+  // Handle form submission
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Here you would typically send the data to your backend
+    console.log({
+      promotionType: selectedPromotion,
+      duration,
+      phoneNumber,
+      totalPrice: calculateTotal(),
+    });
+    setIsSubmitted(true);
+  };
+
+  // Handle mobile continue button click
+  const handleMobileContinue = () => {
+    setShowContactForm(true);
+    if (contactFormRef.current) {
+      contactFormRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   return (
     <div>
       <Header />
-      <div className="max-w-6xl mx-auto px-4 md:py-38 py-24">
-        {/* Header */}
-        <div className="text-center mb-12">
+      <div className="max-w-6xl mx-auto px-4 py-5">
+        {/* Page Header */}
+        <div className="text-center mb-12 pt-15">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Business Growth Plans
+            Boost Your Business Visibility
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Choose your membership and add powerful services to boost your
-            visibility
+            Pay-per-promotion options to get your offers seen by more customers
           </p>
         </div>
 
-        {/* Limited Time Offer */}
-        <div className="bg-gradient-to-r from-red-600 to-orange-500 text-white rounded-lg p-4 mb-8 max-w-2xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="mb-3 md:mb-0">
-              <h2 className="text-lg font-bold mb-1">LIMITED TIME OFFER</h2>
-              <p className="text-sm opacity-90">
-                Special launch discounts ending soon
-              </p>
-            </div>
-            <div className="bg-white/20 px-4 py-2 rounded-md font-medium">
-              <span className="text-lg">
-                {timeLeft.hours.toString().padStart(2, "0")}:
-                {timeLeft.minutes.toString().padStart(2, "0")}:
-                {timeLeft.seconds.toString().padStart(2, "0")}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Membership Tiers */}
-        <div className="grid md:grid-cols-3 gap-8 mb-8">
-          {/* Free Tier */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                Basic
-              </h2>
-              <p className="text-gray-600 mb-4">Essential listing features</p>
-              <div className="text-center mb-6">
-                <span className="text-4xl font-bold text-gray-900">₹0</span>
-                <span className="text-gray-500 ml-1">/month</span>
-              </div>
-              <ul className="space-y-3 mb-6">
-                <FeatureItem text="Business listing in directory" />
-                <FeatureItem text="Appear in map searches" />
-                <FeatureItem text="Basic contact information" />
-                <FeatureItem text="1 profile image" />
-                <FeatureItem text="Standard support" />
-              </ul>
-            </div>
-            <button className="w-full py-3 px-6 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-              Get Started
-            </button>
-          </div>
-
-          {/* Local Hero */}
+        {/* Promotion Options */}
+        <div className="grid md:grid-cols-2 gap-8 mb-12">
+          {/* Trending Spotlight */}
           <div
-            className={`bg-white rounded-xl shadow-md border-2 ${
-              selectedTier === "hero"
+            className={`bg-white rounded-xl border-1 border-[#f1f1f1] p-6 transition-all ${
+              selectedPromotion === "trending"
                 ? "border-orange-500"
-                : "border-transparent"
-            } p-6 relative`}
+                : "border-gray-200 hover:border-orange-300"
+            }`}
+            onClick={() => handlePromotionSelect("trending")}
           >
-            {selectedTier === "hero" && (
-              <div className="absolute top-0 right-0 bg-orange-500 text-white px-3 py-1 rounded-bl-lg rounded-tr-lg text-xs font-bold">
-                SELECTED
+            <div className="flex items-center mb-4">
+              <div className="bg-orange-100 p-3 rounded-full mr-4">
+                <FiTrendingUp className="text-orange-600 text-xl" />
               </div>
-            )}
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                Local Hero
-              </h2>
-              <p className="text-gray-600 mb-4">Enhanced visibility</p>
-              <div className="text-center mb-6">
-                <div className="flex items-center justify-center">
-                  <span className="text-4xl font-bold text-orange-600">
-                    ₹399
-                  </span>
-                  <span className="text-gray-500 ml-1">/month</span>
-                  <span className="ml-3 text-sm text-gray-500 line-through">
-                    ₹999
-                  </span>
-                </div>
-                <p className="text-sm text-green-600 mt-1">
-                  Save {pricing.discounts.hero}%
-                </p>
-              </div>
-              <ul className="space-y-3 mb-6">
-                <FeatureItem text="All Basic features" />
-                <FeatureItem text="1 active offer promotion" />
-                <FeatureItem text="Up to 5 business images" />
-                <FeatureItem text="3 social media links" />
-                <FeatureItem text="Respond to reviews" />
-                <FeatureItem text="Basic analytics" />
-                <FeatureItem text="Priority email support" />
-              </ul>
+              <h2 className="text-xl font-semibold">Trending Spotlight</h2>
             </div>
+            <p className="text-gray-600 mb-6">
+              Get your offer featured in our trending section
+            </p>
+
+            <div className="mb-6">
+              <h3 className="font-medium text-gray-900 mb-3">
+                Starting at just ₹99
+              </h3>
+              <div className="bg-orange-50 border border-orange-100 rounded-lg p-3 text-sm text-orange-800">
+                <FiAward className="inline mr-2" />
+                {promotions.trending.auctionNote}
+              </div>
+            </div>
+
+            {/* <ul className="space-y-3 mb-6">
+              <FeatureItem text="Increased visibility in trending section" />
+              <FeatureItem text="Higher click-through rates" />
+              <FeatureItem text="Priority placement over regular listings" />
+              <FeatureItem text="Appears in trending notifications" />
+              <FeatureItem text="Boosted search results" />
+              <FeatureItem text="Free basic banner design to match your offer theme" />
+              <FeatureItem text="Higher chances of going viral among nearby users" />
+            </ul> */}
+            <ul className="space-y-3 mb-6">
+              <FeatureItem text="Visible in the 'Trending Offers' section for up to 7 days" />
+              <FeatureItem text="Get up to 2x higher click-through rate vs regular listings" />
+              <FeatureItem text="Priority placement in main feed during top activity hours" />
+              <FeatureItem text="Included in real-time 'Trending Now' notifications" />
+              <FeatureItem text="Boosted ranking in category searches and filters" />
+              <FeatureItem text="Free basic banner design (worth ₹199) to match your branding" />
+              <FeatureItem text="Great for flash sales, event promos, and new launches" />
+              <FeatureItem text="Instant visibility boost without long-term lock-ins" />
+              <FeatureItem text="Higher chances of local discovery via app & web traffic" />
+            </ul>
+
             <button
-              onClick={() => setSelectedTier("hero")}
               className={`w-full py-3 px-6 rounded-lg font-medium ${
-                selectedTier === "hero"
+                selectedPromotion === "trending"
                   ? "bg-orange-600 text-white hover:bg-orange-700"
                   : "bg-orange-100 text-orange-800 hover:bg-orange-200"
               } transition-colors`}
             >
-              {selectedTier === "hero" ? "Selected" : "Choose Plan"}
+              {selectedPromotion === "trending"
+                ? "Selected"
+                : "Select Promotion"}
             </button>
           </div>
 
-          {/* Kanpur Champion */}
+          {/* Featured Placement */}
           <div
-            className={`bg-white rounded-xl shadow-md border-2 ${
-              selectedTier === "champion"
-                ? "border-red-500"
-                : "border-transparent"
-            } p-6 relative`}
+            className={`bg-white rounded-xl border-1 border-[#f1f1f1] p-6 transition-all ${
+              selectedPromotion === "featured"
+                ? "border-blue-500"
+                : "border-gray-200 hover:border-blue-300"
+            }`}
+            onClick={() => handlePromotionSelect("featured")}
           >
-            <div className="absolute top-0 right-0 bg-red-500 text-white px-3 py-1 rounded-bl-lg rounded-tr-lg text-xs font-bold">
-              MOST POPULAR
-            </div>
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                City Champion
-              </h2>
-              <p className="text-gray-600 mb-4">Maximum exposure</p>
-              <div className="text-center mb-6">
-                <div className="flex items-center justify-center">
-                  <span className="text-4xl font-bold text-red-600">₹999</span>
-                  <span className="text-gray-500 ml-1">/month</span>
-                  <span className="ml-3 text-sm text-gray-500 line-through">
-                    ₹2499
-                  </span>
-                </div>
-                <p className="text-sm text-green-600 mt-1">
-                  Save {pricing.discounts.champion}%
-                </p>
+            <div className="flex items-center mb-4">
+              <div className="bg-blue-100 p-3 rounded-full mr-4">
+                <FiAward className="text-blue-600 text-xl" />
               </div>
-              <ul className="space-y-3 mb-6">
-                <FeatureItem text="All Local Hero features" />
-                <FeatureItem text="Up to 5 active offers" />
-                <FeatureItem text="Embed 3 videos" />
-                <FeatureItem text="5 social media links" />
-                <FeatureItem text="Highlight favorite reviews" />
-                <FeatureItem text="Advanced analytics" />
-                <FeatureItem text="Dedicated phone support" />
-                <FeatureItem text="Free banner design" />
-              </ul>
+              <h2 className="text-xl font-semibold">Featured Placement</h2>
             </div>
+            <p className="text-gray-600 mb-6">
+              Premium visibility at the top of relevant categories
+            </p>
+
+            <div className="mb-6">
+              <h3 className="font-medium text-gray-900 mb-3">
+                Starting at just ₹199
+              </h3>
+              <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm text-blue-800">
+                <FiAward className="inline mr-2" />
+                {promotions.featured.auctionNote}
+              </div>
+            </div>
+            {/* 
+            <ul className="space-y-3 mb-6">
+              <FeatureItem text="Prime placement at category tops" />
+              <FeatureItem text="Featured badge for credibility" />
+              <FeatureItem text="2x more visibility than standard listings" />
+              <FeatureItem text="Appears in featured collections" />
+              <FeatureItem text="Receive a professionally designed banner for your offer" />
+              <FeatureItem text="Boosted visibility during peak hours and local events" />
+              <FeatureItem text="Boost credibility with a trusted 'Featured' badge" />
+            </ul> */}
+            <ul className="space-y-3 mb-6">
+              <FeatureItem text="Top-of-category placement for maximum visibility (7 days)" />
+              <FeatureItem text="Get 2x–3x more views than regular listings" />
+              <FeatureItem text="Trusted 'Featured' badge improves credibility & conversions" />
+              <FeatureItem text="Displayed in 'Flash Deals' on homepage + spotlight widgets" />
+              <FeatureItem text="Average 60% more engagement vs non-featured listings" />
+              <FeatureItem text="Boosted visibility during high-traffic local times" />
+              <FeatureItem text="Includes premium banner design (worth ₹499) for free" />
+              <FeatureItem text="Featured in weekly 'Top Picks' and seasonal campaigns" />
+              <FeatureItem text="Priority seller support + campaign insights for better ROI" />
+            </ul>
+
             <button
-              onClick={() => setSelectedTier("champion")}
               className={`w-full py-3 px-6 rounded-lg font-medium ${
-                selectedTier === "champion"
-                  ? "bg-red-600 text-white hover:bg-red-700"
-                  : "bg-red-100 text-red-800 hover:bg-red-200"
+                selectedPromotion === "featured"
+                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                  : "bg-blue-100 text-blue-800 hover:bg-blue-200"
               } transition-colors`}
             >
-              {selectedTier === "champion" ? "Selected" : "Choose Plan"}
+              {selectedPromotion === "featured"
+                ? "Selected"
+                : "Select Promotion"}
             </button>
           </div>
         </div>
 
-        {/* Additional Services */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Additional Growth Services
+        {/* Duration Selection */}
+        {selectedPromotion && (
+          <div className="bg-white rounded-xl border-1 border-[#f1f1f1] p-6 mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              Select Promotion Duration
             </h2>
-            <button
-              onClick={() => setShowAddons(!showAddons)}
-              className="text-red-600 font-medium flex items-center"
-            >
-              {showAddons ? "Hide Services" : "View Services"}
-              {showAddons ? (
-                <FiMinus className="ml-2" />
-              ) : (
-                <FiPlus className="ml-2" />
-              )}
-            </button>
-          </div>
 
-          {showAddons && (
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <ServiceCard
-                title="Professional Banner Design"
-                price="₹499"
-                description="Custom banner for your business profile"
-                isSelected={selectedServices["Professional Banner Design"]}
-                onToggle={() => toggleService("Professional Banner Design")}
-              />
-              <ServiceCard
-                title="Additional Image Slots"
-                price="₹199"
-                description="5 extra images for your listing"
-                isSelected={selectedServices["Additional Image Slots"]}
-                onToggle={() => toggleService("Additional Image Slots")}
-              />
-              <ServiceCard
-                title="Review Management"
-                price="₹799/month"
-                description="Monitor and respond to reviews"
-                isSelected={selectedServices["Review Management"]}
-                onToggle={() => toggleService("Review Management")}
-              />
-              <ServiceCard
-                title="Featured Listing Boost"
-                price="₹299"
-                description="7-day premium placement"
-                isSelected={selectedServices["Featured Listing Boost"]}
-                onToggle={() => toggleService("Featured Listing Boost")}
-              />
+            <div className="grid md:grid-cols-3 gap-4">
+              {promotions[selectedPromotion].durationOptions.map((option) => (
+                <div
+                  key={option.days}
+                  className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                    duration === option.days
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-blue-200 hover:border-gray-300"
+                  }`}
+                  onClick={() => setDuration(option.days)}
+                >
+                  <div className="flex items-center mb-2">
+                    <FiClock className="text-gray-500 mr-2" />
+                    <h3 className="font-medium">
+                      {option.days} Day{option.days > 1 ? "s" : ""}
+                    </h3>
+                  </div>
+                  <p className="text-2xl font-bold text-blue-600">
+                    ₹{option.price}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    ₹{Math.round(option.price / option.days)}/day
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Contact Form */}
+        <div ref={contactFormRef}>
+          {selectedPromotion && !isSubmitted && (
+            <div className="bg-white rounded-xl border-2 border-[#f1f1f1] p-8">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">
+                Complete Your Promotion Request
+              </h2>
+
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-medium text-gray-900 mb-2">
+                  Order Summary
+                </h3>
+                <p className="text-gray-600">
+                  {promotions[selectedPromotion].title} for {duration} day
+                  {duration > 1 ? "s" : ""}
+                </p>
+                <p className="text-2xl font-bold text-green-600 mt-2">
+                  ₹{calculateTotal()}
+                </p>
+              </div>
+
+              {!showContactForm ? (
+                <div className="text-center">
+                  <button
+                    onClick={
+                      isMobile
+                        ? handleMobileContinue
+                        : () => setShowContactForm(true)
+                    }
+                    className="px-8 py-3 bg-blue-500 text-white rounded-4xl font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    Continue for ₹{calculateTotal()}
+                  </button>
+                  <p className="text-sm text-gray-500 mt-3">
+                    Our team will contact you to confirm details and payment
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit}>
+                  <div className="mb-6">
+                    <label
+                      htmlFor="phone"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      placeholder="Enter your WhatsApp number"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      required
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      We&apos;ll call you soon to confirm.
+                    </p>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-3 px-6 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    Submit Request
+                  </button>
+                </form>
+              )}
             </div>
           )}
         </div>
 
-        {/* Purchase Section */}
-        {(selectedTier || Object.values(selectedServices).some((v) => v)) && (
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-              <div className="mb-6 md:mb-0">
-                <h2 className="text-xl font-bold text-gray-900 mb-3">
-                  Your Selection
-                </h2>
-
-                {selectedTier && (
-                  <div className="mb-4">
-                    <p className="font-medium">
-                      {selectedTier === "hero"
-                        ? "Local Hero"
-                        : "Kanpur Champion"}
-                      Plan
-                    </p>
-                    <p className="text-gray-600">
-                      ₹{pricing.discounted[selectedTier]}/month
-                      <span className="ml-2 text-sm text-green-600">
-                        (Save {pricing.discounts[selectedTier]}%)
-                      </span>
-                    </p>
-                  </div>
-                )}
-
-                {Object.entries(selectedServices)
-                  .filter(([isSelected]) => isSelected)
-                  .map(([service]) => (
-                    <div key={service} className="mb-2">
-                      <p className="font-medium">{service}</p>
-                      <p className="text-gray-600">
-                        ₹
-                        {
-                          pricing.services[
-                            service as keyof typeof pricing.services
-                          ]
-                        }
-                      </p>
-                    </div>
-                  ))}
-
-                <div className="mt-4 pt-4 border-t">
-                  <p className="font-semibold">
-                    Total:
-                    <span className="text-2xl font-bold text-red-600">
-                      ₹{calculateTotal()}
-                    </span>
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Offer ends in {timeLeft.hours}h {timeLeft.minutes}m
-                    {timeLeft.seconds}s
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button
-                  className="px-6 py-3 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-                  onClick={() => {
-                    setSelectedTier(null);
-                    setSelectedServices({
-                      "Professional Banner Design": false,
-                      "Additional Image Slots": false,
-                      "Review Management": false,
-                      "Featured Listing Boost": false,
-                    });
-                  }}
-                >
-                  Clear Selection
-                </button>
-                <button
-                  onClick={handlePurchase}
-                  className="px-6 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center justify-center"
-                  disabled={
-                    !selectedTier &&
-                    !Object.values(selectedServices).some((v) => v)
-                  }
-                >
-                  Proceed to Payment <FiArrowRight className="ml-2" />
-                </button>
-              </div>
+        {/* Confirmation Message */}
+        {isSubmitted && (
+          <div className="bg-white rounded-xl border border-[#f1f1f1] p-8 text-center">
+            <div className="bg-green-100 text-green-800 p-4 rounded-full inline-flex items-center justify-center mb-6">
+              <FiCheck className="text-2xl" />
             </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-3">
+              Request Submitted Successfully!
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Our team will reach out to you shortly to confirm your promotion
+              details and payment.
+            </p>
+            <p className="text-sm text-gray-500">
+              For immediate assistance, call us at +91 63067 60227
+            </p>
           </div>
         )}
+
+        {/* How It Works */}
+        <div className="mt-16 bg-gray-50 rounded-xl md:p-8 p-2">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+            How Our Promotion System Works
+          </h2>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="bg-blue-100 text-blue-600 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+                1
+              </div>
+              <h3 className="font-semibold text-lg mb-2">
+                Choose Your Promotion
+              </h3>
+              <p className="text-gray-600">
+                Select between Trending Spotlight or Featured Placement based on
+                your needs
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="bg-blue-100 text-blue-600 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+                2
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Set Duration</h3>
+              <p className="text-gray-600">
+                Pick how long you want your promotion to run (1, 3, or 7 days)
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="bg-blue-100 text-blue-600 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+                3
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Confirm & Pay</h3>
+              <p className="text-gray-600">
+                Our team contacts you to finalize placement and payment
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-8  bg-white p-6 rounded-2xl border border-[#f1f1f1]">
+            <h3 className="font-bold text-lg text-gray-900 mb-3">
+              Auction-Style Placement
+            </h3>
+            <p className="text-gray-600 mb-4">
+              For maximum visibility, we offer premium positions that are
+              allocated based on:
+            </p>
+            <ul className="space-y-2">
+              <li className="flex items-start">
+                <FiCheck className="text-green-500 mr-2 mt-1 flex-shrink-0" />
+                <span className="text-gray-700">
+                  Bid amount (higher bids get better placement)
+                </span>
+              </li>
+              <li className="flex items-start">
+                <FiCheck className="text-green-500 mr-2 mt-1 flex-shrink-0" />
+                <span className="text-gray-700">
+                  Relevance to user searches
+                </span>
+              </li>
+              <li className="flex items-start">
+                <FiCheck className="text-green-500 mr-2 mt-1 flex-shrink-0" />
+                <span className="text-gray-700">Quality of your offer</span>
+              </li>
+            </ul>
+            <p className="text-sm text-gray-500 mt-4">
+              Note: Starting prices shown guarantee basic placement. Contact us
+              for premium position pricing.
+            </p>
+          </div>
+        </div>
       </div>
+
+      {/* Mobile Fixed Promotion Bar */}
+      {isMobile && selectedPromotion && !isSubmitted && (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg p-4 z-50">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-medium text-gray-900">
+                {promotions[selectedPromotion].title}
+              </p>
+              <p className="text-gray-600 text-sm">
+                {duration} day{duration > 1 ? "s" : ""} • ₹{calculateTotal()}
+              </p>
+            </div>
+            <button
+              onClick={handleMobileContinue}
+              className="px-6 py-2 bg-blue-500 text-white rounded-full font-medium hover:bg-blue-600 transition-colors"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </div>
   );
@@ -419,47 +475,5 @@ function FeatureItem({ text }: { text: string }) {
       <FiCheck className="text-green-500 mr-2 mt-0.5 flex-shrink-0" />
       <span className="text-gray-700">{text}</span>
     </li>
-  );
-}
-
-function ServiceCard({
-  title,
-  price,
-  description,
-  isSelected,
-  onToggle,
-}: {
-  title: string;
-  price: string;
-  description: string;
-  isSelected: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <div
-      className={`border rounded-lg p-4 cursor-pointer transition-all ${
-        isSelected
-          ? "border-red-500 bg-red-50"
-          : "border-gray-200 hover:border-gray-300"
-      }`}
-      onClick={onToggle}
-    >
-      <div className="flex justify-between items-start mb-2">
-        <h3 className="font-medium text-gray-900">{title}</h3>
-        <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2 py-1 rounded">
-          {price}
-        </span>
-      </div>
-      <p className="text-sm text-gray-600 mb-3">{description}</p>
-      <button
-        className={`w-full py-2 px-4 rounded-md text-sm font-medium ${
-          isSelected
-            ? "bg-red-600 text-white hover:bg-red-700"
-            : "text-red-600 border border-red-600 hover:bg-red-50"
-        } transition-colors`}
-      >
-        {isSelected ? "Added to Cart" : "Add Service"}
-      </button>
-    </div>
   );
 }

@@ -92,6 +92,7 @@ type Offer = {
   isOnline?: boolean; // Added to fix the error
   website?: string; // Added to fix the error
   address?: string; // Added to fix the error
+  url: string;
 };
 
 export default function OffersSection() {
@@ -102,27 +103,27 @@ export default function OffersSection() {
   const times = useOfferTimer(data);
 
   // Fetch offers
-  const getOffer = async () => {
+  const getOffers = async () => {
     try {
-      const res = await axios.get<Offer[]>(
-        "http://localhost:5002/api/getOffer",
-        {
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
-        }
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_API}/getAllOffers`
       );
-      setData(res.data);
-      console.log(res.data);
+      if (res.status === 200 && Array.isArray(res?.data?.offers)) {
+        setSelectedOffer(res.data.offers);
+        setData(res.data.offers);
+        console.log(res.data.offers, "offers");
+      } else {
+        console.warn("Unexpected data format", res?.data?.offers);
+        // setOffers([]); // fallback to empty array
+      }
     } catch (e) {
-      console.log(e);
+      console.error("Fetch error:", e);
+      // setOffers([]); // fallback to empty array
     }
   };
 
   useEffect(() => {
-    getOffer();
+    getOffers();
   }, []);
   // Safely return null if data is not valid or empty
   if (!Array.isArray(data) || data.length === 0) return null;
@@ -157,7 +158,7 @@ export default function OffersSection() {
                   {/* Image */}
                   <div className="relative w-full h-48 md:h-60">
                     <Image
-                      src={d.offerImage || "/placeholder.jpg"}
+                      src={d.url || "/placeholder.jpg"}
                       alt={d.offerName || "Offer"}
                       fill
                       className="object-cover"
@@ -253,9 +254,9 @@ export default function OffersSection() {
           )}
         </div>
 
-        {/* Offer Modal */}
+        {/* Offer Modal poopup */}
         <AnimatePresence>
-          {selectedOffer && (
+          {selectedOffer && selectedOffer.url && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -273,7 +274,7 @@ export default function OffersSection() {
                 {/* Offer Image with Timer */}
                 <div className="relative h-56 w-full">
                   <Image
-                    src={selectedOffer.offerImage || "/placeholder.jpg"}
+                    src={selectedOffer.url}
                     alt={selectedOffer.offerName || "Offer"}
                     fill
                     className="object-cover"
@@ -438,7 +439,7 @@ const OfferCard = ({
 
       <div className="relative h-full w-full">
         <Image
-          src={offer?.offerImage || "/placeholder.jpg"}
+          src={offer?.url || "/placeholder.jpg"}
           alt={offer?.offerName || "Offer Image"}
           fill
           className="object-cover"
@@ -461,370 +462,3 @@ const OfferCard = ({
     </motion.div>
   );
 };
-
-// "use client";
-// import { useState, useEffect } from "react";
-// import { motion, AnimatePresence } from "framer-motion";
-// import Image from "next/image";
-// import axios from "axios";
-// import { FiClock } from "react-icons/fi";
-
-// // Custom hook for timer functionality
-// const useOfferTimer = (offers: Offer[] | null) => {
-//   const [times, setTimes] = useState<{ [key: number]: number }>({});
-
-//   useEffect(() => {
-//     if (!offers) return;
-
-//     const initialTimes: { [key: number]: number } = {};
-//     offers.forEach((offer) => {
-//       if (offer._id && offer.offerEndDate) {
-//         const endTime = new Date(offer.offerEndDate).getTime();
-//         const currentTime = new Date().getTime();
-//         const timeRemaining = Math.max(0, endTime - currentTime);
-//         initialTimes[offer._id] = Math.floor(timeRemaining / 1000);
-//       }
-//     });
-
-//     setTimes(initialTimes);
-
-//     const interval = setInterval(() => {
-//       setTimes((prevTimes) => {
-//         const newTimes = { ...prevTimes };
-//         let allTimersFinished = true;
-
-//         for (const id in newTimes) {
-//           if (newTimes[id] > 0) {
-//             newTimes[id] -= 1;
-//             allTimersFinished = false;
-//           }
-//         }
-
-//         if (allTimersFinished) {
-//           clearInterval(interval);
-//         }
-
-//         return newTimes;
-//       });
-//     }, 1000);
-
-//     return () => clearInterval(interval);
-//   }, [offers]);
-
-//   return times;
-// };
-
-// const formatTime = (seconds: number): string => {
-//   if (seconds <= 0) return "Expired";
-
-//   const days = Math.floor(seconds / (24 * 60 * 60));
-//   const hours = Math.floor((seconds % (24 * 60 * 60)) / (60 * 60));
-//   const minutes = Math.floor((seconds % (60 * 60)) / 60);
-//   const remainingSeconds = seconds % 60;
-
-//   if (days > 0) {
-//     return `${days}d ${hours}h`;
-//   } else if (hours > 0) {
-//     return `${hours}h ${minutes}m`;
-//   } else {
-//     return `${minutes}m ${remainingSeconds}s`;
-//   }
-// };
-
-// type Offer = {
-//   _id: number;
-//   title?: string;
-//   store?: string;
-//   location?: string;
-//   contact?: string;
-//   description?: string;
-//   image?: File;
-//   offerImage?: string;
-//   offerName?: string;
-//   offerType?: string;
-//   offerPrice?: string;
-//   storeName?: string;
-//   offerEndDate?: string;
-//   offerStartDate?: string;
-//   offerDescription?: string;
-// };
-
-// export default function OffersSection() {
-//   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
-//   const [data, setData] = useState<Offer[] | null>(null);
-//   const [isLoading, setIsLoading] = useState(true);
-//   const [error, setError] = useState<string | null>(null);
-
-//   const times = useOfferTimer(data);
-
-//   const getOffer = async () => {
-//     try {
-//       setIsLoading(true);
-//       const res = await axios.get<Offer[]>(
-//         "http://localhost:5002/api/getOffer",
-//         {
-//           headers: {
-//             "Cache-Control": "no-cache, no-store, must-revalidate",
-//             Pragma: "no-cache",
-//             Expires: "0",
-//           },
-//         }
-//       );
-//       setData(res.data);
-//       setError(null);
-//     } catch (e) {
-//       console.error(e);
-//       setError("Failed to load offers. Please try again later.");
-//       setData([]);
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
-
-//   useEffect(() => {
-//     getOffer();
-//   }, []);
-
-//   if (isLoading) {
-//     return (
-//       <section className="px-4 py-8 bg-gradient-to-b from-red-50 to-white">
-//         <div className="max-w-7xl mx-auto">
-//           <div className="flex justify-center items-center h-64">
-//             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
-//           </div>
-//         </div>
-//       </section>
-//     );
-//   }
-
-//   if (error) {
-//     return (
-//       <section className="px-4 py-8 bg-gradient-to-b from-red-50 to-white">
-//         <div className="max-w-7xl mx-auto">
-//           <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
-//             <p>{error}</p>
-//             <button
-//               onClick={getOffer}
-//               className="mt-2 text-red-600 hover:text-red-800 font-medium"
-//             >
-//               Retry
-//             </button>
-//           </div>
-//         </div>
-//       </section>
-//     );
-//   }
-
-//   if (!data || data.length === 0) {
-//     return (
-//       <section className="px-4 py-8 bg-gradient-to-b from-red-50 to-white">
-//         <div className="max-w-7xl mx-auto">
-//           <div className="text-center py-12">
-//             <div className="flex justify-center mb-4">
-//               <FiClock className="text-4xl text-gray-400" />
-//             </div>
-//             <h3 className="text-xl font-medium text-gray-700 mb-2">
-//               No Offers Available Yet
-//             </h3>
-//             <p className="text-gray-500">
-//               Check back later for exciting deals and offers!
-//             </p>
-//           </div>
-//         </div>
-//       </section>
-//     );
-//   }
-
-//   return (
-//     <section className="px-4 py-8 bg-gradient-to-b from-red-50 to-white">
-//       <div className="max-w-7xl mx-auto">
-//         {/* Trending Offers */}
-//         {data.filter((d) => d.offerType === "trending").length > 0 && (
-//           <>
-//             <div className="mt-8 border-b border-red-100 pb-6">
-//               <h2 className="text-3xl font-bold mb-6 text-red-600 pt-6">
-//                 Trending Offers
-//               </h2>
-//               <div className="grid grid-cols-2 gap-3">
-//                 {data
-//                   .filter((d) => d.offerType === "trending")
-//                   .slice(0, 2)
-//                   .map((d) => (
-//                     <OfferCard
-//                       key={d._id}
-//                       offer={d}
-//                       times={times}
-//                       className="h-[150px] md:h-[250px]"
-//                       setSelectedOffer={setSelectedOffer}
-//                     />
-//                   ))}
-//               </div>
-//             </div>
-//           </>
-//         )}
-
-//         {/* Flash Deals */}
-//         {data.filter((d) => d.offerType === "hot").length > 0 && (
-//           <>
-//             <h2 className="text-3xl font-bold mb-6 text-red-600 pt-6">
-//               Flash Deals ⚡
-//             </h2>
-//             <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:flex md:flex-row md:gap-4">
-//               <div className="md:flex md:flex-col grid grid-cols-2 gap-3 md:w-[30%]">
-//                 {data
-//                   .filter((d) => d.offerType === "hot")
-//                   .slice(0, 2)
-//                   .map((d) => (
-//                     <OfferCard
-//                       key={d._id}
-//                       offer={d}
-//                       times={times}
-//                       className="h-[200px] md:h-[260px]"
-//                       setSelectedOffer={setSelectedOffer}
-//                     />
-//                   ))}
-//               </div>
-
-//               {data.length >= 3 && (
-//                 <div className="col-span-2 md:w-[40%]">
-//                   <OfferCard
-//                     offer={data[2]}
-//                     times={times}
-//                     className="h-[300px] md:h-[535px]"
-//                     setSelectedOffer={setSelectedOffer}
-//                   />
-//                 </div>
-//               )}
-
-//               {data.length >= 4 && (
-//                 <div className="col-span-2 md:w-[30%] flex flex-col gap-3">
-//                   <OfferCard
-//                     offer={data[3]}
-//                     times={times}
-//                     className="h-[260px]"
-//                     setSelectedOffer={setSelectedOffer}
-//                   />
-//                   <div className="grid grid-cols-2 gap-3">
-//                     {data.slice(4, 6).map((d) => (
-//                       <OfferCard
-//                         key={d._id}
-//                         offer={d}
-//                         times={times}
-//                         className="h-[150px] md:h-[260px]"
-//                         setSelectedOffer={setSelectedOffer}
-//                       />
-//                     ))}
-//                   </div>
-//                 </div>
-//               )}
-//             </div>
-//           </>
-//         )}
-
-//         {/* Offer Modal */}
-//         <AnimatePresence>
-//           {selectedOffer && (
-//             <motion.div
-//               initial={{ opacity: 0 }}
-//               animate={{ opacity: 1 }}
-//               exit={{ opacity: 0 }}
-//               className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-//               onClick={() => setSelectedOffer(null)}
-//             >
-//               <motion.div
-//                 initial={{ scale: 0.9 }}
-//                 animate={{ scale: 1 }}
-//                 exit={{ scale: 0.9 }}
-//                 className="bg-white rounded-xl p-6 max-w-md w-full"
-//                 onClick={(e) => e.stopPropagation()}
-//               >
-//                 <h3 className="text-2xl font-bold mb-4">
-//                   {selectedOffer.offerName || selectedOffer.title}
-//                 </h3>
-//                 <div className="space-y-2">
-//                   <p>
-//                     <strong>Store:</strong>{" "}
-//                     {selectedOffer.storeName || selectedOffer.store}
-//                   </p>
-//                   <p>
-//                     <strong>Location:</strong> {selectedOffer.location}
-//                   </p>
-//                   <p>
-//                     <strong>Contact:</strong> {selectedOffer.contact}
-//                   </p>
-//                   <p>
-//                     <strong>Time Remaining:</strong>{" "}
-//                     {formatTime(times[selectedOffer._id] || 0)}
-//                   </p>
-//                   <p>
-//                     <strong>Description:</strong>{" "}
-//                     {selectedOffer.offerDescription ||
-//                       selectedOffer.description}
-//                   </p>
-//                 </div>
-//                 <button
-//                   className="mt-4 w-full bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
-//                   onClick={() => setSelectedOffer(null)}
-//                 >
-//                   Close
-//                 </button>
-//               </motion.div>
-//             </motion.div>
-//           )}
-//         </AnimatePresence>
-//       </div>
-//     </section>
-//   );
-// }
-
-// type OfferCardProps = {
-//   offer: Offer;
-//   times: { [key: number]: number };
-//   className?: string;
-//   setSelectedOffer: (offer: Offer) => void;
-// };
-
-// const OfferCard = ({
-//   offer,
-//   times,
-//   className,
-//   setSelectedOffer,
-// }: OfferCardProps) => {
-//   const timerValue = times[offer._id] || 0;
-
-//   return (
-//     <motion.div
-//       className={`relative group rounded-xl overflow-hidden ${className}`}
-//       whileHover={{ scale: 1.03 }}
-//       transition={{ duration: 0.3 }}
-//       onClick={() => setSelectedOffer(offer)}
-//     >
-//       <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs z-10 md:text-sm">
-//         {formatTime(timerValue)}
-//       </div>
-
-//       <div className="relative h-full w-full">
-//         <Image
-//           src={offer?.offerImage || "/placeholder.jpg"}
-//           alt={offer?.offerName || "Offer Image"}
-//           fill
-//           className="object-cover"
-//           sizes="(max-width: 768px) 100vw, 50vw"
-//         />
-//         <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/60" />
-//       </div>
-
-//       <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 text-white z-10">
-//         <h3 className="text-sm font-bold md:text-lg">{offer?.offerName}</h3>
-//         <div className="flex justify-between items-center mt-1">
-//           <div className="md:flex w-full items-center justify-between">
-//             <p className="text-xs md:text-sm">{offer?.storeName}</p>
-//             <span className="text-xs bg-white/20 px-2 py-1 rounded-full md:text-sm">
-//               {offer?.offerPrice}
-//             </span>
-//           </div>
-//         </div>
-//       </div>
-//     </motion.div>
-//   );
-// };

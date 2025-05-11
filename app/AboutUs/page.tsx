@@ -1,6 +1,12 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { motion, animate, useMotionValue, useAnimationFrame, useInView } from "framer-motion";
+import {
+  motion,
+  animate,
+  useMotionValue,
+  useAnimationFrame,
+  useInView,
+} from "framer-motion";
 import {
   FiUsers,
   FiAward,
@@ -14,9 +20,16 @@ import {
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Image from "next/image";
+import Link from "next/link";
 
 // CountUp with inView detection
-function CountUpNumber({ target, duration = 1.2 }: { target: number; duration?: number }) {
+function CountUpNumber({
+  target,
+  duration = 1.2,
+}: {
+  target: number;
+  duration?: number;
+}) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
   const [displayValue, setDisplayValue] = useState(0);
@@ -36,9 +49,7 @@ function CountUpNumber({ target, duration = 1.2 }: { target: number; duration?: 
     setDisplayValue(Math.floor(motionValue.get()));
   });
 
-  return (
-    <span ref={ref}>{displayValue.toLocaleString()}</span>
-  );
+  return <span ref={ref}>{displayValue.toLocaleString()}</span>;
 }
 
 export default function AboutPage() {
@@ -97,7 +108,7 @@ export default function AboutPage() {
       <Header />
 
       {/* Hero */}
-      <section className="relative md:py-15 py-10 bg-gradient-to-br md:mt-20 mt-10 from-red-50 via-white to-red-50 overflow-hidden">
+      <section className="relative md:py-15 py-10 md:mt-20 mt-10 overflow-hidden">
         <div className="absolute inset-0 opacity-5 pattern-dots pattern-red-500 pattern-bg-white pattern-size-4 pattern-opacity-100" />
         <div className="relative max-w-7xl mx-auto px-4 text-center">
           <motion.h1
@@ -277,9 +288,12 @@ export default function AboutPage() {
             celebrating their neighborhoods.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <button className="bg-white text-red-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-medium text-lg shadow-md transition hover:scale-105">
+            <Link
+              href={"/"}
+              className="bg-white text-red-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-medium text-lg shadow-md transition hover:scale-105"
+            >
               Get Started
-            </button>
+            </Link>
             <button className="bg-transparent border-2 border-white px-8 py-3 rounded-lg font-medium text-lg transition hover:bg-white/10">
               Learn More
             </button>

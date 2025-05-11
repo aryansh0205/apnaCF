@@ -13,10 +13,10 @@ import {
   FiTag,
   FiUsers,
   FiCalendar,
-  FiUserCheck,
   FiInfo,
+  FiTrendingUp,
 } from "react-icons/fi";
-import Link from "next/link"; // Import Link from next.js
+import Link from "next/link";
 
 export default function Footer() {
   return (
@@ -36,11 +36,11 @@ export default function Footer() {
                   { label: "Creators", icon: <FiUsers /> },
                   { label: "Places", icon: <FiMapPin /> },
                   { label: "Events", icon: <FiCalendar /> },
-                  { label: "Membership", icon: <FiUserCheck /> },
+                  { label: "Promote Your Business", icon: <FiTrendingUp /> },
                   { label: "About Us", icon: <FiInfo /> },
                 ].map(({ label, icon }) => {
                   const href =
-                    label === "Membership"
+                    label === "Promote Your Business"
                       ? "/membership"
                       : label === "Creators"
                       ? "/creators"

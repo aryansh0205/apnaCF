@@ -1,42 +1,82 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Logo from "../Asset/logo.png";
 import {
-  FiMenu,
-  FiX,
   FiUser,
   FiSearch,
   FiChevronDown,
   FiMapPin,
-  FiBell,
-  FiShoppingBag,
-  FiHeart,
-  FiSettings,
-  FiLogOut,
+  FiTag,
+  FiUsers,
+  FiInfo,
+  FiHome,
+  FiX,
+  FiPhone,
 } from "react-icons/fi";
+import axios from "axios";
+
 interface User {
-  name?: string;
-  email?: string;
+  name: string;
+  // ... other user properties
 }
 
-// User Sidebar Component
-const UserSidebar = ({
+const LoginPopup = ({
   isOpen,
   onClose,
-  user,
+  isMobile,
 }: {
   isOpen: boolean;
   onClose: () => void;
-  user: User | null;
+  isMobile: boolean;
 }) => {
+  // const [isLoading, setIsLoading] = useState(true);
+  // const [error, setError] = useState(null);
+  // const [data, setData] = useState(null);
+  const [guestUser, setGuestUser] = useState<string | null>(null);
+
+  useEffect(() => {
+    setGuestUser(localStorage.getItem("guestUser"));
+  }, []);
+
+  const guestCreation = async () => {
+    // setIsLoading(true);
+
+    try {
+      // Check if guest user already exists
+      if (guestUser) {
+        console.log("Guest user already exists:", guestUser);
+        return;
+      }
+      // Step 1: Get IP address
+      const ipRes = await axios.get("https://api.ipify.org?format=json");
+      const ipAddress = ipRes.data.ip;
+      console.log(ipRes, "ipRes", ipAddress, "ipAddress");
+      // Step 2: Send to your backend
+      const res = await axios.post(
+        `http://localhost:5002/api/createGuestUser`,
+        { IPAddress: ipAddress } // include in POST body
+      );
+      console.log(res?.data);
+      localStorage.setItem("guestUser", res.data?.data?.userName);
+      setGuestUser(res.data?.data?.userName);
+      // localStorage.setItem("guestUser", JSON.stringify(res.data));
+
+      // Optional: handle response
+      console.log("Guest created:", res.data);
+    } catch (error) {
+      console.error("Guest creation error:", error);
+    } finally {
+      // setIsLoading(false);
+    }
+  };
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Overlay */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -45,88 +85,49 @@ const UserSidebar = ({
             onClick={onClose}
           />
 
-          {/* Sidebar */}
           <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "tween", ease: "easeInOut" }}
-            className="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-xl z-50 flex flex-col"
+            initial={isMobile ? { y: "100%" } : { scale: 0.9, opacity: 0 }}
+            animate={isMobile ? { y: 0 } : { scale: 1, opacity: 1 }}
+            exit={isMobile ? { y: "100%" } : { scale: 0.9, opacity: 0 }}
+            className={`fixed ${
+              isMobile
+                ? "bottom-0 left-0 right-0 rounded-2xl"
+                : "inset-0 m-auto max-w-md w-full h-fit rounded-2xl"
+            } bg-white shadow-xl z-50 overflow-hidden`}
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
             <div className="flex items-center justify-between p-4 border-b">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                  <FiUser className="text-red-600" />
-                </div>
-                <div>
-                  <h3 className="font-medium">{user?.name || "Welcome!"}</h3>
-                  <p className="text-sm text-gray-500">
-                    {user?.email || "Guest"}
-                  </p>
-                </div>
-              </div>
+              <h2 className="text-lg font-semibold">Welcome to Apna City</h2>
               <button
                 onClick={onClose}
-                className="p-2 rounded-full hover:bg-gray-100"
+                className="p-1 rounded-full hover:bg-gray-100"
               >
-                <FiX />
+                <FiX className="w-5 h-5" />
               </button>
             </div>
-
-            {/* Main Content */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
-              {/* Account Section */}
-              <div>
-                <h4 className="text-xs uppercase text-gray-500 font-medium mb-3 px-2">
-                  Account
-                </h4>
-                <div className="space-y-1">
-                  <SidebarItem icon={<FiUser />} text="Profile" />
-                  <SidebarItem icon={<FiSettings />} text="Settings" />
-                </div>
-              </div>
-
-              {/* Activity Section */}
-              <div>
-                <h4 className="text-xs uppercase text-gray-500 font-medium mb-3 px-2">
-                  Activity
-                </h4>
-                <div className="space-y-1">
-                  <SidebarItem
-                    icon={<FiBell />}
-                    text="Notifications"
-                    badge={3}
-                  />
-                  <SidebarItem icon={<FiShoppingBag />} text="Your Orders" />
-                </div>
-              </div>
-
-              {/* Saved Items Section */}
-              <div>
-                <h4 className="text-xs uppercase text-gray-500 font-medium mb-3 px-2">
-                  Saved Items
-                </h4>
-                <div className="space-y-1">
-                  <SidebarItem icon={<FiHeart />} text="Saved Offers" />
-                  <SidebarItem icon={<FiMapPin />} text="Saved Places" />
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="p-4 border-t">
-              {user ? (
-                <button className="w-full flex items-center justify-center space-x-2 text-red-600 hover:bg-red-50 py-2 px-4 rounded-lg">
-                  <FiLogOut />
-                  <span>Sign Out</span>
+            {!guestUser ? (
+              <div className="p-4">
+                <button
+                  onClick={() => {
+                    guestCreation();
+                    onClose();
+                  }}
+                  className="w-full py-3 px-4 bg-gray-100 rounded-lg text-gray-700  hover:bg-gray-200 transition-colors mb-4"
+                >
+                  Continue as Guest
                 </button>
-              ) : (
-                <button className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700">
-                  Sign In
-                </button>
-              )}
-            </div>
+
+                <div className="text-center py-4 text-gray-500 text-sm">
+                  Other login options coming soon
+                </div>
+              </div>
+            ) : (
+              <div className="p-4">
+                <div className="w-full py-3 px-4 bg-gray-100 rounded-lg text-gray-700 flex items-center justify-center hover:bg-gray-200 transition-colors mb-4">
+                  Hi, {guestUser}
+                </div>
+              </div>
+            )}
           </motion.div>
         </>
       )}
@@ -134,41 +135,23 @@ const UserSidebar = ({
   );
 };
 
-const SidebarItem = ({
-  icon,
-  text,
-  badge,
-}: {
-  icon: React.ReactNode;
-  text: string;
-  badge?: number;
-}) => (
-  <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 transition-colors">
-    <div className="flex items-center space-x-3">
-      <span className="text-gray-700">{icon}</span>
-      <span>{text}</span>
-    </div>
-    {badge && (
-      <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-        {badge}
-      </span>
-    )}
-  </button>
-);
-
 export default function Header() {
+  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [showCityPopup, setShowCityPopup] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const user = null; //use State
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [guestUser, setGuestUser] = useState<string | null>(null);
 
   const cities = [
     { name: "Kanpur", available: true },
-    { name: "Delhi", available: false },
+    { name: "Delhi", available: true },
     { name: "Mumbai", available: false },
     { name: "Bangalore", available: false },
     { name: "Hyderabad", available: false },
@@ -177,11 +160,33 @@ export default function Header() {
     { name: "Pune", available: false },
   ];
 
+  const navItems = [
+    { name: "Home", href: "/", icon: <FiHome size={18} /> },
+    { name: "Offers", href: "/offers", icon: <FiTag size={18} /> },
+    { name: "Creators", href: "/creators", icon: <FiUsers size={18} /> },
+    { name: "Contact Us", href: "/ContactUs", icon: <FiPhone size={18} /> },
+    { name: "About Us", href: "/AboutUs", icon: <FiInfo size={18} /> },
+  ];
+
   useEffect(() => {
-    // Check if city is already selected in localStorage
+    const checkIfMobile = () => setIsMobile(window.innerWidth < 768);
+    checkIfMobile();
+    window.addEventListener("resize", checkIfMobile);
+    return () => window.removeEventListener("resize", checkIfMobile);
+  }, []);
+
+  useEffect(() => {
+    // Get guestUser from localStorage
+    const storedGuestUser = localStorage.getItem("guestUser");
+    if (storedGuestUser) {
+      setGuestUser(storedGuestUser);
+    }
+
+    // Get selected city from localStorage
     const savedCity = localStorage.getItem("selectedCity");
     if (savedCity) {
       setSelectedCity(savedCity);
+      setUser(null);
     } else {
       setShowCityPopup(true);
     }
@@ -221,15 +226,15 @@ export default function Header() {
               selectCity(foundCity.name);
             } else {
               setLocationError(
-                `We'll soon come to ${city}! Currently only available in Kanpur.`
+                `We&apos;ll soon come to ${city}! Currently only available in Kanpur.`
               );
             }
           } else {
             setLocationError("Could not determine your city");
           }
         } catch (e) {
-          setLocationError("Error fetching location data");
           console.log(e);
+          setLocationError("Error fetching location data");
         } finally {
           setIsDetectingLocation(false);
         }
@@ -259,17 +264,14 @@ export default function Header() {
 
   return (
     <>
-      {/* Main Header */}
       <header
         className={`fixed w-full top-0 z-40 bg-white shadow-sm transition-all duration-300 ${
           isScrolled ? "shadow-md" : "shadow-sm"
         }`}
       >
-        {/* Primary Header */}
         <div className="border-b border-gray-100">
           <div className="container mx-auto px-4 py-3">
             <div className="flex items-center justify-between">
-              {/* Logo */}
               <Link href="/" className="flex items-center space-x-2">
                 <Image src={Logo} alt="Logo" width={32} height={32} />
                 <span className="text-lg font-semibold text-red-600">
@@ -277,24 +279,22 @@ export default function Header() {
                 </span>
               </Link>
 
-              {/* City Selector and other elements */}
               <div className="hidden md:flex items-center space-x-4">
-                {/* Search Bar - Desktop */}
-                <div className="flex mx-4">
-                  <div className="relative w-[400px]">
-                    <input
-                      type="text"
-                      placeholder="Search for places, offers..."
-                      className="w-full px-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-1 focus:ring-red-500 text-sm"
-                    />
-                    <FiSearch className="absolute right-3 top-2.5 text-gray-400" />
-                  </div>
-                </div>
-                {/* City Selector */}
+                {/* <div className="relative w-[400px]">
+                  <input
+                    type="text"
+                    placeholder="Search for places, offers..."
+                    className="w-full px-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-1 focus:ring-red-500 text-sm"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  <FiSearch className="absolute right-3 top-2.5 text-gray-400" />
+                </div> */}
+
                 <div className="relative">
                   <button
                     onClick={toggleCityPopup}
-                    className="flex items-center gap-1 text-gray-600 hover:text-red-600 text-sm"
+                    className="flex items-center gap-1 text-gray-600 hover:text-red-600 text-sm px-3 py-1.5 rounded-full bg-gray-50"
                   >
                     <FiMapPin className="text-red-500" />
                     <span>{selectedCity || "Select City"}</span>
@@ -306,37 +306,112 @@ export default function Header() {
                   </button>
                 </div>
 
-                {/* Show other elements only if Kanpur is selected */}
-                {isKanpurSelected && (
-                  <>
-                    {/* Login Button - Now triggers sidebar */}
-                    <button
-                      onClick={() => setIsSidebarOpen(true)}
-                      className="flex items-center space-x-1 text-gray-600 hover:text-red-600 text-sm"
-                    >
-                      <FiUser className="w-4 h-4" />
-                      <span>Login</span>
-                    </button>
-                  </>
+                {user || guestUser ? (
+                  <button
+                    onClick={() => setShowLoginPopup(true)}
+                    className="flex items-center space-x-1 text-gray-600 hover:text-red-600 text-sm"
+                  >
+                    <FiUser className="w-4 h-4" />
+                    {user ? (
+                      <span>{user.name.split(" ")[0]}</span>
+                    ) : (
+                      <span>{guestUser}</span>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setShowLoginPopup(true)}
+                    className="flex items-center space-x-1 text-gray-600 hover:text-red-600 text-sm"
+                  >
+                    <FiUser className="w-4 h-4" />
+                    <span>Login</span>
+                  </button>
                 )}
               </div>
 
-              {/* Mobile Menu Toggle */}
-              <button
-                className="md:hidden p-2"
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-              >
-                {isMenuOpen ? (
-                  <FiX className="w-5 h-5 text-gray-700" />
+              <div className="md:hidden flex items-center space-x-4">
+                <button
+                  onClick={() => setShowMobileSearch(!showMobileSearch)}
+                  className="p-2 text-gray-600"
+                >
+                  <FiSearch className="w-5 h-5" />
+                </button>
+
+                <button onClick={toggleCityPopup} className="p-2 text-gray-600">
+                  <FiMapPin className="w-5 h-5" />
+                </button>
+
+                {user ? (
+                  <button
+                    onClick={() => setShowLoginPopup(true)}
+                    className="flex items-center text-gray-600"
+                  >
+                    <span className="text-sm">
+                      Hi, {user.name.split(" ")[0]}
+                    </span>
+                  </button>
                 ) : (
-                  <FiMenu className="w-5 h-5 text-gray-700" />
+                  <button
+                    onClick={() => setShowLoginPopup(true)}
+                    className="text-gray-600"
+                  >
+                    <FiUser className="w-5 h-5" />
+                  </button>
                 )}
-              </button>
+              </div>
             </div>
+
+            {showMobileSearch && (
+              <div className="mt-3 md:hidden">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    className="w-full px-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-1 focus:ring-red-500 text-sm"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  <FiSearch className="absolute right-3 top-2.5 text-gray-400" />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* City Selection Popup */}
+        {isKanpurSelected && (
+          <div className="border-b border-gray-100 overflow-x-auto no-scrollbar">
+            <div className="container mx-auto px-2">
+              <nav className="flex items-center space-x-2 py-3 whitespace-nowrap">
+                {navItems.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={`group flex items-center gap-1 py-2 px-3 text-sm transition-colors border-b-2 ${
+                        isActive
+                          ? "border-red-600 text-red-600"
+                          : "border-transparent text-gray-600 hover:text-red-600"
+                      }`}
+                    >
+                      <span
+                        className={`transition-colors ${
+                          isActive
+                            ? "text-red-600"
+                            : "text-gray-600 group-hover:text-red-600"
+                        }`}
+                      >
+                        {item.icon}
+                      </span>
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
+          </div>
+        )}
+
         <AnimatePresence>
           {showCityPopup && (
             <motion.div
@@ -349,14 +424,14 @@ export default function Header() {
                 <button
                   onClick={detectLocation}
                   disabled={isDetectingLocation}
-                  className="w-[300px] flex items-center justify-start gap-2  py-2 cursor-pointer rounded-lg text-sm text-gray-700"
+                  className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
                 >
                   {isDetectingLocation ? (
                     "Detecting your location..."
                   ) : (
                     <>
                       <FiMapPin className="text-red-600" />
-                      <div className="text-red-600"> Detect My Location </div>
+                      <span className="text-red-600">Detect My Location</span>
                     </>
                   )}
                 </button>
@@ -404,163 +479,14 @@ export default function Header() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Secondary Header - Only show if Kanpur is selected */}
-        {isKanpurSelected && (
-          <div className="hidden md:block border-b border-gray-100">
-            <div className="container mx-auto px-4">
-              <nav className="flex items-center space-x-8">
-                <Link
-                  href="/under-construction"
-                  className="py-3 text-gray-600 hover:text-red-600 text-sm transition-colors"
-                >
-                  Places
-                </Link>
-                <Link
-                  href="/offers"
-                  className="py-3 text-gray-600 hover:text-red-600 text-sm transition-colors"
-                >
-                  Offers
-                </Link>
-                <Link
-                  href="/creators"
-                  className="py-3 text-gray-600 hover:text-red-600 text-sm transition-colors"
-                >
-                  Creators
-                </Link>
-                <Link
-                  href="/under-construction"
-                  className="py-3 text-gray-600 hover:text-red-600 text-sm transition-colors"
-                >
-                  Events
-                </Link>
-                <Link
-                  href="/ContactUs"
-                  className="py-3 text-gray-600 hover:text-red-600 text-sm transition-colors"
-                >
-                  Post Offer
-                </Link>
-                <Link
-                  href="/AboutUs"
-                  className="py-3 text-gray-600 hover:text-red-600 text-sm transition-colors"
-                >
-                  About Us
-                </Link>
-              </nav>
-            </div>
-          </div>
-        )}
-
-        {/* Mobile Menu */}
-        <AnimatePresence>
-          {isMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="md:hidden fixed inset-0 top-16 bg-white pt-4 px-4 z-40 overflow-y-auto"
-            >
-              {/* City Selector - Mobile */}
-              <div className="mb-4">
-                <button
-                  onClick={toggleCityPopup}
-                  className="w-full flex justify-between items-center px-4 py-2 border border-gray-200 rounded-lg text-sm"
-                >
-                  <div className="flex items-center gap-2">
-                    <FiMapPin className="text-red-500" />
-                    <span>{selectedCity || "Select City"}</span>
-                  </div>
-                  <FiChevronDown
-                    className={`transition-transform ${
-                      showCityPopup ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* Show other elements only if Kanpur is selected */}
-              {isKanpurSelected && (
-                <>
-                  {/* Search Bar - Mobile */}
-                  <div className="mb-4">
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Search..."
-                        className="w-full px-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-1 focus:ring-red-500 text-sm"
-                      />
-                      <FiSearch className="absolute right-3 top-2.5 text-gray-400" />
-                    </div>
-                  </div>
-
-                  {/* Mobile Nav Items */}
-                  <nav className="flex flex-col space-y-2 mb-4">
-                    <Link
-                      href="/under-construction"
-                      className="py-2 px-2 text-gray-600 hover:bg-gray-50 rounded-md text-sm"
-                    >
-                      Places
-                    </Link>
-                    <Link
-                      href="/offers"
-                      className="py-2 px-2 text-gray-600 hover:bg-gray-50 rounded-md text-sm"
-                    >
-                      Offers
-                    </Link>
-                    <Link
-                      href="/creators"
-                      className="py-2 px-2 text-gray-600 hover:bg-gray-50 rounded-md text-sm"
-                    >
-                      Creators
-                    </Link>
-                    <Link
-                      href="/under-construction"
-                      className="py-2 px-2 text-gray-600 hover:bg-gray-50 rounded-md text-sm"
-                    >
-                      Events
-                    </Link>
-                    <Link
-                      href="/ContactUs"
-                      className="py-2 px-2 text-gray-600 hover:text-red-600 text-sm transition-colors"
-                    >
-                      Post Offer
-                    </Link>
-                    <Link
-                      href="/AboutUs"
-                      className="py-2 px-2 text-gray-600 hover:text-red-600 text-sm transition-colors"
-                    >
-                      About Us
-                    </Link>
-                  </nav>
-
-                  {/* Login Button - Mobile - Now triggers sidebar */}
-                  <div className="mt-4 pt-4 border-t border-gray-100">
-                    <button
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        setIsSidebarOpen(true);
-                      }}
-                      className="flex items-center space-x-2 text-gray-600 text-sm"
-                    >
-                      <FiUser className="w-4 h-4" />
-                      <span>Login</span>
-                    </button>
-                  </div>
-                </>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
       </header>
 
-      {/* User Sidebar */}
-      <UserSidebar
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-        user={user}
+      <LoginPopup
+        isOpen={showLoginPopup}
+        onClose={() => setShowLoginPopup(false)}
+        isMobile={isMobile}
       />
 
-      {/* Coming Soon Overlay for non-Kanpur cities */}
       {selectedCity && !isKanpurSelected && (
         <div className="fixed inset-0 bg-white bg-opacity-90 z-30 flex flex-col items-center justify-center p-6 text-center mt-16">
           <div className="max-w-md">
@@ -569,10 +495,9 @@ export default function Header() {
               Coming Soon to {selectedCity}!
             </h2>
             <p className="text-gray-600 mb-6">
-              We&#39;re currently only available in Kanpur. We&#39;ll be
+              We&apos;re currently only available in Kanpur. We&apos;ll be
               expanding to your city soon!
             </p>
-
             <button
               onClick={() => {
                 localStorage.removeItem("selectedCity");
@@ -586,6 +511,8 @@ export default function Header() {
           </div>
         </div>
       )}
+
+      <div className="pt-28 md:pt-24"></div>
     </>
   );
 }
